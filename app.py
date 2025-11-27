@@ -27,7 +27,7 @@ def calculate_duration(dep_time_str, arr_time_str):
     return round((arr - dep).total_seconds() / 3600, 2)
 
 @app.on_event("startup")
-async def startup():
+def startup():
     database.add_sample_flights()
 
 @app.get("/")
@@ -35,7 +35,7 @@ def home():
     return {"message": "Flight Search API is running", "docs": "/docs"}
 
 @app.get("/flights", response_model=List[Flight])
-def get_flights(sort_by: str = Query("departure_time", regex="^(price|departure_time|duration)$")):
+def get_flights(sort_by: str = Query("departure_time", pattern="^(price|departure_time|duration)$")):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -67,7 +67,7 @@ def search_flights(
     origin: str = Query(..., min_length=3, max_length=3),
     destination: str = Query(..., min_length=3, max_length=3),
     travel_date: date = Query(..., alias="date"),
-    sort_by: str = Query("departure_time", regex="^(price|departure_time|duration)$")
+    sort_by: str = Query("departure_time", pattern="^(price|departure_time|duration)$")
 ):
     if origin.upper() == destination.upper():
         raise HTTPException(status_code=400, detail="Origin and destination must be different")

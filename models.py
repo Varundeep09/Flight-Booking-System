@@ -4,7 +4,6 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
 import random
 
-# Database setup
 engine = create_engine("sqlite:///flights.db")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -24,10 +23,9 @@ class Flight(Base):
 def create_tables():
     Base.metadata.create_all(bind=engine)
 
-def populate_sample_data():
+def seed_data():
     db = SessionLocal()
     
-    # Sample airports
     airports = ["DEL", "BOM", "BLR", "MAA", "CCU", "HYD"]
     airlines = ["AI", "6E", "SG", "UK"]
     
@@ -37,7 +35,6 @@ def populate_sample_data():
         airline = random.choice(airlines)
         flight_no = f"{airline}{100 + i}"
         
-        # Generate departure time (next 7 days)
         base_time = datetime.now() + timedelta(days=random.randint(0, 7))
         departure = base_time.replace(hour=random.randint(6, 22), minute=random.choice([0, 30]))
         arrival = departure + timedelta(hours=random.randint(1, 4))
@@ -59,5 +56,5 @@ def populate_sample_data():
 
 if __name__ == "__main__":
     create_tables()
-    populate_sample_data()
-    print("Database created and populated with sample data")
+    seed_data()
+    print("Database initialized with sample data")

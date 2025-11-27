@@ -1,14 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from datetime import datetime, date
-from typing import Optional, List
-from milestone1_database import SessionLocal, Flight, create_tables, populate_sample_data
-from datetime import timedelta
+from datetime import datetime, date, timedelta
+from typing import List
+from models import SessionLocal, Flight, create_tables, seed_data
 
-app = FastAPI(title="Flight Search API - Milestone 1")
+app = FastAPI(title="Flight Search API")
 
-# Pydantic models
 class FlightResponse(BaseModel):
     id: int
     flight_no: str
@@ -23,7 +21,6 @@ class FlightResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# Database dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -34,10 +31,9 @@ def get_db():
 @app.on_event("startup")
 async def startup_event():
     create_tables()
-    # Check if data exists, if not populate
     db = SessionLocal()
     if db.query(Flight).count() == 0:
-        populate_sample_data()
+        seed_data()
     db.close()
 
 @app.get("/flights", response_model=List[FlightResponse])
@@ -45,13 +41,11 @@ def get_all_flights(
     db: Session = Depends(get_db),
     sort_by: str = Query("departure_time", enum=["price", "departure_time", "duration"])
 ):
-    """Retrieve all flights with optional sorting"""
     query = db.query(Flight)
     
     if sort_by == "price":
         query = query.order_by(Flight.price)
     elif sort_by == "duration":
-        # Sort by duration (arrival - departure)
         flights = query.all()
         flights.sort(key=lambda f: (f.arrival_time - f.departure_time).total_seconds())
         return [_format_flight(f) for f in flights]
@@ -69,13 +63,9 @@ def search_flights(
     sort_by: str = Query("departure_time", enum=["price", "departure_time", "duration"]),
     db: Session = Depends(get_db)
 ):
-    """Search flights by origin, destination and date"""
-    
-    # Input validation
     if origin == destination:
         raise HTTPException(status_code=400, detail="Origin and destination cannot be same")
     
-    # Query flights
     query = db.query(Flight).filter(
         Flight.origin == origin.upper(),
         Flight.destination == destination.upper(),
@@ -85,7 +75,6 @@ def search_flights(
     
     flights = query.all()
     
-    # Sort results
     if sort_by == "price":
         flights.sort(key=lambda f: f.price)
     elif sort_by == "duration":
@@ -97,14 +86,12 @@ def search_flights(
 
 @app.get("/flights/{flight_id}", response_model=FlightResponse)
 def get_flight(flight_id: int, db: Session = Depends(get_db)):
-    """Get specific flight by ID"""
     flight = db.query(Flight).filter(Flight.id == flight_id).first()
     if not flight:
         raise HTTPException(status_code=404, detail="Flight not found")
     return _format_flight(flight)
 
 def _format_flight(flight: Flight) -> FlightResponse:
-    """Format flight object with calculated duration"""
     duration = (flight.arrival_time - flight.departure_time).total_seconds() / 60
     return FlightResponse(
         id=flight.id,
