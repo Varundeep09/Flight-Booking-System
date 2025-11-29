@@ -2,10 +2,10 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from datetime import datetime, date
 import sqlite3
-from typing import List, Optional
+from typing import List
 import database
 
-app = FastAPI(title="Flight Search API")
+app = FastAPI()
 
 class Flight(BaseModel):
     id: int
@@ -16,15 +16,9 @@ class Flight(BaseModel):
     arrival_time: str
     price: float
     seats_available: int
-    duration_hours: float
 
-def get_db_connection():
+def get_db():
     return sqlite3.connect('flights.db')
-
-def calculate_duration(dep_time_str, arr_time_str):
-    dep = datetime.fromisoformat(dep_time_str)
-    arr = datetime.fromisoformat(arr_time_str)
-    return round((arr - dep).total_seconds() / 3600, 2)
 
 @app.on_event("startup")
 def startup():
@@ -32,11 +26,11 @@ def startup():
 
 @app.get("/")
 def home():
-    return {"message": "Flight Search API is running", "docs": "/docs"}
+    return {"message": "Flight API"}
 
-@app.get("/flights", response_model=List[Flight])
-def get_flights(sort_by: str = Query("departure_time", pattern="^(price|departure_time|duration)$")):
-    conn = get_db_connection()
+@app.get("/flights")
+def get_flights(sort_by: str = "departure_time"):
+    conn = get_db()
     cursor = conn.cursor()
     
     cursor.execute("SELECT * FROM flights")
@@ -45,74 +39,50 @@ def get_flights(sort_by: str = Query("departure_time", pattern="^(price|departur
     
     flights = []
     for row in rows:
-        duration = calculate_duration(row[4], row[5])
         flights.append(Flight(
             id=row[0], flight_no=row[1], origin=row[2], destination=row[3],
             departure_time=row[4], arrival_time=row[5], price=row[6],
-            seats_available=row[7], duration_hours=duration
+            seats_available=row[7]
         ))
     
-    # Sort flights
     if sort_by == "price":
         flights.sort(key=lambda x: x.price)
-    elif sort_by == "duration":
-        flights.sort(key=lambda x: x.duration_hours)
-    else:
-        flights.sort(key=lambda x: x.departure_time)
     
     return flights
 
-@app.get("/search", response_model=List[Flight])
-def search_flights(
-    origin: str = Query(..., min_length=3, max_length=3),
-    destination: str = Query(..., min_length=3, max_length=3),
-    travel_date: date = Query(..., alias="date"),
-    sort_by: str = Query("departure_time", pattern="^(price|departure_time|duration)$")
-):
-    if origin.upper() == destination.upper():
-        raise HTTPException(status_code=400, detail="Origin and destination must be different")
+@app.get("/search")
+def search_flights(origin: str, destination: str, date: str, sort_by: str = "departure_time"):
+    if origin == destination:
+        raise HTTPException(status_code=400, detail="Same origin and destination")
     
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor()
-    
-    # Search for flights on specific date
-    date_start = travel_date.strftime("%Y-%m-%d")
-    date_end = (travel_date.strftime("%Y-%m-%d"))
     
     cursor.execute('''
         SELECT * FROM flights 
         WHERE origin = ? AND destination = ? 
         AND date(departure_time) = ?
-    ''', (origin.upper(), destination.upper(), date_start))
+    ''', (origin.upper(), destination.upper(), date))
     
     rows = cursor.fetchall()
     conn.close()
     
-    if not rows:
-        return []
-    
     flights = []
     for row in rows:
-        duration = calculate_duration(row[4], row[5])
         flights.append(Flight(
             id=row[0], flight_no=row[1], origin=row[2], destination=row[3],
             departure_time=row[4], arrival_time=row[5], price=row[6],
-            seats_available=row[7], duration_hours=duration
+            seats_available=row[7]
         ))
     
-    # Apply sorting
     if sort_by == "price":
         flights.sort(key=lambda x: x.price)
-    elif sort_by == "duration":
-        flights.sort(key=lambda x: x.duration_hours)
-    else:
-        flights.sort(key=lambda x: x.departure_time)
     
     return flights
 
-@app.get("/flights/{flight_id}", response_model=Flight)
-def get_flight_by_id(flight_id: int):
-    conn = get_db_connection()
+@app.get("/flights/{flight_id}")
+def get_flight(flight_id: int):
+    conn = get_db()
     cursor = conn.cursor()
     
     cursor.execute("SELECT * FROM flights WHERE id = ?", (flight_id,))
@@ -122,11 +92,10 @@ def get_flight_by_id(flight_id: int):
     if not row:
         raise HTTPException(status_code=404, detail="Flight not found")
     
-    duration = calculate_duration(row[4], row[5])
     return Flight(
         id=row[0], flight_no=row[1], origin=row[2], destination=row[3],
         departure_time=row[4], arrival_time=row[5], price=row[6],
-        seats_available=row[7], duration_hours=duration
+        seats_available=row[7]
     )
 
 if __name__ == "__main__":

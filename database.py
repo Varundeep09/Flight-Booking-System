@@ -2,15 +2,14 @@ import sqlite3
 from datetime import datetime, timedelta
 import random
 
-def init_db():
+def setup_db():
     conn = sqlite3.connect('flights.db')
     cursor = conn.cursor()
     
-    # Create flights table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS flights (
             id INTEGER PRIMARY KEY,
-            flight_no TEXT UNIQUE,
+            flight_no TEXT,
             origin TEXT,
             destination TEXT,
             departure_time TEXT,
@@ -24,51 +23,48 @@ def init_db():
     return conn
 
 def add_sample_flights():
-    conn = init_db()
+    conn = setup_db()
     cursor = conn.cursor()
     
-    # Check if data already exists
+    # Check if we already have data
     cursor.execute("SELECT COUNT(*) FROM flights")
     if cursor.fetchone()[0] > 0:
         conn.close()
         return
     
-    airports = ["DEL", "BOM", "BLR", "MAA", "CCU", "HYD"]
-    airlines = ["AI", "6E", "SG", "UK"]
+    # Add some flights
+    airports = ["DEL", "BOM", "BLR", "MAA"]
+    airlines = ["AI", "6E", "SG"]
     
-    flight_data = []
-    for i in range(1, 51):
+    for i in range(20):
         origin = random.choice(airports)
-        destination = random.choice([a for a in airports if a != origin])
+        dest = random.choice([a for a in airports if a != origin])
         airline = random.choice(airlines)
         
-        # Generate times for next week
-        days_ahead = random.randint(0, 7)
-        base_date = datetime.now() + timedelta(days=days_ahead)
+        # Make departure time
+        days = random.randint(0, 5)
+        hour = random.randint(6, 20)
+        dep_time = datetime.now() + timedelta(days=days)
+        dep_time = dep_time.replace(hour=hour, minute=0)
+        arr_time = dep_time + timedelta(hours=random.randint(1, 3))
         
-        dep_hour = random.randint(6, 22)
-        dep_time = base_date.replace(hour=dep_hour, minute=random.choice([0, 30]))
-        arr_time = dep_time + timedelta(hours=random.randint(1, 4))
-        
-        flight_data.append((
-            f"{airline}{100 + i}",
+        cursor.execute('''
+            INSERT INTO flights (flight_no, origin, destination, departure_time, 
+                               arrival_time, price, seats_available)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            f"{airline}{100+i}",
             origin,
-            destination,
+            dest,
             dep_time.isoformat(),
             arr_time.isoformat(),
-            random.randint(3000, 15000),
-            random.randint(20, 180)
+            random.randint(4000, 12000),
+            random.randint(50, 150)
         ))
-    
-    cursor.executemany('''
-        INSERT INTO flights (flight_no, origin, destination, departure_time, 
-                           arrival_time, price, seats_available)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', flight_data)
     
     conn.commit()
     conn.close()
-    print(f"Added {len(flight_data)} sample flights to database")
+    print("Added sample flights")
 
 if __name__ == "__main__":
     add_sample_flights()
