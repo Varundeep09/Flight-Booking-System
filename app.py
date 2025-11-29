@@ -1,11 +1,11 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from datetime import datetime, date
 import sqlite3
 from typing import List
 import database
 
-app = FastAPI()
+app = FastAPI(title="Flight Search API")
 
 class Flight(BaseModel):
     id: int
@@ -22,18 +22,22 @@ def get_db():
 
 @app.on_event("startup")
 def startup():
-    database.add_sample_flights()
+    database.setup_flights()
 
 @app.get("/")
 def home():
-    return {"message": "Flight API"}
+    return {"message": "Flight Search API - Milestone 1"}
 
 @app.get("/flights")
-def get_flights(sort_by: str = "departure_time"):
+def get_all_flights(sort_by: str = "departure_time"):
     conn = get_db()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT * FROM flights")
+    if sort_by == "price":
+        cursor.execute("SELECT * FROM flights ORDER BY price")
+    else:
+        cursor.execute("SELECT * FROM flights ORDER BY departure_time")
+    
     rows = cursor.fetchall()
     conn.close()
     
@@ -41,29 +45,26 @@ def get_flights(sort_by: str = "departure_time"):
     for row in rows:
         flights.append(Flight(
             id=row[0], flight_no=row[1], origin=row[2], destination=row[3],
-            departure_time=row[4], arrival_time=row[5], price=row[6],
-            seats_available=row[7]
+            departure_time=row[4], arrival_time=row[5], price=row[6], seats_available=row[7]
         ))
-    
-    if sort_by == "price":
-        flights.sort(key=lambda x: x.price)
     
     return flights
 
 @app.get("/search")
 def search_flights(origin: str, destination: str, date: str, sort_by: str = "departure_time"):
     if origin == destination:
-        raise HTTPException(status_code=400, detail="Same origin and destination")
+        raise HTTPException(status_code=400, detail="Origin and destination cannot be same")
     
     conn = get_db()
     cursor = conn.cursor()
     
-    cursor.execute('''
-        SELECT * FROM flights 
-        WHERE origin = ? AND destination = ? 
-        AND date(departure_time) = ?
-    ''', (origin.upper(), destination.upper(), date))
+    query = "SELECT * FROM flights WHERE origin = ? AND destination = ? AND date(departure_time) = ?"
+    if sort_by == "price":
+        query += " ORDER BY price"
+    else:
+        query += " ORDER BY departure_time"
     
+    cursor.execute(query, (origin.upper(), destination.upper(), date))
     rows = cursor.fetchall()
     conn.close()
     
@@ -71,32 +72,10 @@ def search_flights(origin: str, destination: str, date: str, sort_by: str = "dep
     for row in rows:
         flights.append(Flight(
             id=row[0], flight_no=row[1], origin=row[2], destination=row[3],
-            departure_time=row[4], arrival_time=row[5], price=row[6],
-            seats_available=row[7]
+            departure_time=row[4], arrival_time=row[5], price=row[6], seats_available=row[7]
         ))
     
-    if sort_by == "price":
-        flights.sort(key=lambda x: x.price)
-    
     return flights
-
-@app.get("/flights/{flight_id}")
-def get_flight(flight_id: int):
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT * FROM flights WHERE id = ?", (flight_id,))
-    row = cursor.fetchone()
-    conn.close()
-    
-    if not row:
-        raise HTTPException(status_code=404, detail="Flight not found")
-    
-    return Flight(
-        id=row[0], flight_no=row[1], origin=row[2], destination=row[3],
-        departure_time=row[4], arrival_time=row[5], price=row[6],
-        seats_available=row[7]
-    )
 
 if __name__ == "__main__":
     import uvicorn
