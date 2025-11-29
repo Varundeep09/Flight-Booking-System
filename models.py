@@ -1,60 +1,56 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+import sqlite3
 from datetime import datetime, timedelta
 import random
 
-engine = create_engine("sqlite:///flights.db")
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-class Flight(Base):
-    __tablename__ = "flights"
+def create_db():
+    conn = sqlite3.connect('flights.db')
+    cursor = conn.cursor()
     
-    id = Column(Integer, primary_key=True, index=True)
-    flight_no = Column(String, unique=True, index=True)
-    origin = Column(String, index=True)
-    destination = Column(String, index=True)
-    departure_time = Column(DateTime)
-    arrival_time = Column(DateTime)
-    price = Column(Float)
-    seats_available = Column(Integer)
-
-def create_tables():
-    Base.metadata.create_all(bind=engine)
-
-def seed_data():
-    db = SessionLocal()
-    
-    airports = ["DEL", "BOM", "BLR", "MAA", "CCU", "HYD"]
-    airlines = ["AI", "6E", "SG", "UK"]
-    
-    flights = []
-    for i in range(50):
-        origin, destination = random.sample(airports, 2)
-        airline = random.choice(airlines)
-        flight_no = f"{airline}{100 + i}"
-        
-        base_time = datetime.now() + timedelta(days=random.randint(0, 7))
-        departure = base_time.replace(hour=random.randint(6, 22), minute=random.choice([0, 30]))
-        arrival = departure + timedelta(hours=random.randint(1, 4))
-        
-        flight = Flight(
-            flight_no=flight_no,
-            origin=origin,
-            destination=destination,
-            departure_time=departure,
-            arrival_time=arrival,
-            price=random.randint(3000, 15000),
-            seats_available=random.randint(10, 180)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS flights (
+            id INTEGER PRIMARY KEY,
+            flight_no TEXT,
+            origin TEXT,
+            destination TEXT,
+            departure_time TEXT,
+            arrival_time TEXT,
+            price REAL,
+            seats_available INTEGER
         )
-        flights.append(flight)
+    ''')
     
-    db.add_all(flights)
-    db.commit()
-    db.close()
+    conn.commit()
+    conn.close()
+
+def add_flights():
+    create_db()
+    conn = sqlite3.connect('flights.db')
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT COUNT(*) FROM flights")
+    if cursor.fetchone()[0] > 0:
+        conn.close()
+        return
+    
+    airports = ["DEL", "BOM", "BLR", "MAA"]
+    
+    for i in range(15):
+        origin = random.choice(airports)
+        dest = random.choice([a for a in airports if a != origin])
+        
+        dep_time = datetime.now() + timedelta(days=random.randint(0, 3))
+        arr_time = dep_time + timedelta(hours=2)
+        
+        cursor.execute('''
+            INSERT INTO flights VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            i+1, f"AI{100+i}", origin, dest,
+            dep_time.isoformat(), arr_time.isoformat(),
+            random.randint(5000, 10000), random.randint(50, 100)
+        ))
+    
+    conn.commit()
+    conn.close()
 
 if __name__ == "__main__":
-    create_tables()
-    seed_data()
-    print("Database initialized with sample data")
+    add_flights()
