@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flight Booking System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .search-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .search-box h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        input, select {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #764ba2;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #653a8a;
+            transform: translateY(-2px);
+        }
+        .results {
+            display: grid;
+            gap: 20px;
+        }
+        .flight-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .flight-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .flight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .flight-no {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .route {
+            font-size: 18px;
+            color: #666;
+        }
+        .flight-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .detail-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .detail-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+        .price-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 2px solid #f0f0f0;
+        }
+        .price-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .base-price {
+            font-size: 18px;
+            color: #999;
+            text-decoration: line-through;
+        }
+        .dynamic-price {
+            font-size: 32px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .seats-badge {
+            background: #ff9800;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .btn-details {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-details:hover {
+            background: #5568d3;
+        }
+        .no-results {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            color: #666;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 30px;
+            border-radius: 10px;
+            position: relative;
+        }
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #999;
+        }
+        .factor-item {
+            background: #f0f4ff;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✈️ Flight Booking System</h1>
+            <p>Search and book flights with real-time dynamic pricing</p>
+        </div>
+
+        <div class="search-box">
+            <h2>Search Flights</h2>
+            <div class="form-group">
+                <input type="text" id="origin" placeholder="From (e.g., DEL)" maxlength="3">
+                <input type="text" id="destination" placeholder="To (e.g., BOM)" maxlength="3">
+                <input type="date" id="date" min="2026-01-01">
+            </div>
+            <div class="btn-group">
+                <button class="btn-primary" onclick="searchFlights()">🔍 Search Flights</button>
+                <button class="btn-secondary" onclick="getAllFlights()">📋 Show All Flights</button>
+            </div>
+        </div>
+
+        <div id="results" class="results"></div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('date').min = '2026-01-01';
+        document.getElementById('date').value = '2026-01-15';
+
+        function searchFlights() {
+            const origin = document.getElementById('origin').value.toUpperCase();
+            const destination = document.getElementById('destination').value.toUpperCase();
+            const date = document.getElementById('date').value;
+
+            if (!origin || !destination || !date) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            fetch(`/search?origin=${origin}&destination=${destination}&date=${date}`)
+                .then(res => res.json())
+                .then(data => displayFlights(data))
+                .catch(err => alert('Error: ' + err));
+        }
+
+        function getAllFlights() {
+            fetch('/flights')
+                .then(res => res.json())
+                .then(data => displayFlights(data))
+                .catch(err => alert('Error: ' + err));
+        }
+
+        function displayFlights(flights) {
+            const results = document.getElementById('results');
+            
+            if (flights.length === 0) {
+                results.innerHTML = '<div class="no-results"><h2>No flights found</h2><p>Try different search criteria</p></div>';
+                return;
+            }
+
+            results.innerHTML = flights.map(flight => `
+                <div class="flight-card">
+                    <div class="flight-header">
+                        <div>
+                            <div class="flight-no">${flight.flight_no}</div>
+                            <div class="route">${flight.origin} → ${flight.destination}</div>
+                        </div>
+                        <span class="seats-badge">${flight.seats_available} seats left</span>
+                    </div>
+                    
+                    <div class="flight-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Departure</div>
+                            <div class="detail-value">${formatDateTime(flight.departure_time)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Arrival</div>
+                            <div class="detail-value">${formatDateTime(flight.arrival_time)}</div>
+                        </div>
+                    </div>
+
+                    <div class="price-section">
+                        <div class="price-info">
+                            <span class="base-price">₹${flight.base_fare}</span>
+                            <span class="dynamic-price">₹${flight.dynamic_price}</span>
+                        </div>
+                        <button class="btn-details" onclick="viewDetails(${flight.id})">View Details</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDateTime(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleString('en-IN', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        function viewDetails(flightId) {
+            fetch(`/flights/${flightId}/price`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('modal-body').innerHTML = `
+                        <h2>${data.flight_no}</h2>
+                        <p style="color: #666; margin-bottom: 20px;">${data.origin} → ${data.destination}</p>
+                        
+                        <div style="text-align: center; margin: 20px 0;">
+                            <div style="font-size: 14px; color: #999;">Base Fare</div>
+                            <div style="font-size: 24px; color: #999; text-decoration: line-through;">₹${data.base_fare}</div>
+                            <div style="font-size: 14px; color: #4CAF50; margin-top: 10px;">Dynamic Price</div>
+                            <div style="font-size: 36px; color: #4CAF50; font-weight: bold;">₹${data.dynamic_price}</div>
+                        </div>
+
+                        <h3 style="margin-top: 20px;">Price Factors</h3>
+                        <div class="factor-item">
+                            <span>Seat Availability</span>
+                            <span>+${(data.price_factors.seat_factor * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="factor-item">
+                            <span>Time to Departure</span>
+                            <span>+${(data.price_factors.time_factor * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="factor-item">
+                            <span>Demand (${data.price_factors.demand_level})</span>
+                            <span>+${(data.price_factors.demand_factor * 100).toFixed(0)}%</span>
+                        </div>
+
+                        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                <span>Occupancy:</span>
+                                <strong>${data.occupancy_percent}%</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                <span>Seats Available:</span>
+                                <strong>${data.seats_available}</strong>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('modal').style.display = 'block';
+                });
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Load all flights on page load
+        getAllFlights();
+    </script>
+</body>
+</html>
