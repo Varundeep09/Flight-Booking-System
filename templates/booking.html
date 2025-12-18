@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Flight - Flight Booking System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .booking-steps {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .step {
+            background: white;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 20px;
+            opacity: 0.5;
+        }
+        .step.active {
+            opacity: 1;
+            background: #667eea;
+            color: white;
+        }
+        .booking-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .booking-section.active {
+            display: block;
+        }
+        .flight-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .seat-map {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        .seat {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .seat.available {
+            background: #e8f5e8;
+            border-color: #4CAF50;
+        }
+        .seat.occupied {
+            background: #ffebee;
+            border-color: #f44336;
+            cursor: not-allowed;
+        }
+        .seat.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .seat.business {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .price-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .payment-method {
+            border: 2px solid #ddd;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .payment-method.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .confirmation {
+            text-align: center;
+            padding: 40px;
+        }
+        .pnr-display {
+            font-size: 36px;
+            color: #28a745;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #667eea;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">← Back to Search</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Complete Your Booking</h1>
+        </div>
+
+        <div class="booking-steps">
+            <div class="step active" id="step1">1. Select Seat</div>
+            <div class="step" id="step2">2. Passenger Info</div>
+            <div class="step" id="step3">3. Payment</div>
+            <div class="step" id="step4">4. Confirmation</div>
+        </div>
+
+        <!-- Flight Info (Always visible) -->
+        <div class="flight-info" id="flightInfo">
+            <h3>Flight Details</h3>
+            <div id="flightDetails">Loading flight information...</div>
+        </div>
+
+        <!-- Step 1: Seat Selection -->
+        <div class="booking-section active" id="seatSelection">
+            <h2>Select Your Seat</h2>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <span style="display: inline-block; margin: 0 15px;">
+                    <div class="seat business" style="display: inline-block;"></div>
+                    Business Class
+                </span>
+                <span style="display: inline-block; margin: 0 15px;">
+                    <div class="seat available" style="display: inline-block;"></div>
+                    Available
+                </span>
+                <span style="display: inline-block; margin: 0 15px;">
+                    <div class="seat occupied" style="display: inline-block;"></div>
+                    Occupied
+                </span>
+                <span style="display: inline-block; margin: 0 15px;">
+                    <div class="seat selected" style="display: inline-block;"></div>
+                    Selected
+                </span>
+            </div>
+            <div class="seat-map" id="seatMap">
+                <!-- Seats will be loaded here -->
+            </div>
+            <div style="text-align: center;">
+                <button class="btn btn-primary" onclick="nextStep(2)" id="seatNextBtn" disabled>
+                    Continue to Passenger Info
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Passenger Information -->
+        <div class="booking-section" id="passengerInfo">
+            <h2>Passenger Information</h2>
+            <form id="passengerForm">
+                <div class="form-group">
+                    <label for="passengerName">Full Name *</label>
+                    <input type="text" id="passengerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="passengerAge">Age *</label>
+                    <input type="number" id="passengerAge" min="1" max="120" required>
+                </div>
+                <div class="form-group">
+                    <label for="passengerPhone">Phone Number *</label>
+                    <input type="tel" id="passengerPhone" required>
+                </div>
+                <div class="form-group">
+                    <label for="passengerEmail">Email Address</label>
+                    <input type="email" id="passengerEmail">
+                </div>
+            </form>
+            <div style="text-align: center;">
+                <button class="btn btn-secondary" onclick="prevStep(1)">Back</button>
+                <button class="btn btn-primary" onclick="nextStep(3)">Continue to Payment</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Payment -->
+        <div class="booking-section" id="payment">
+            <h2>Payment</h2>
+            <div class="price-summary">
+                <h3>Price Summary</h3>
+                <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                    <span>Base Fare:</span>
+                    <span id="baseFareDisplay">₹0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                    <span>Dynamic Pricing:</span>
+                    <span id="dynamicPriceDisplay">₹0</span>
+                </div>
+                <hr>
+                <div style="display: flex; justify-content: space-between; margin: 10px 0; font-size: 20px; font-weight: bold;">
+                    <span>Total Amount:</span>
+                    <span id="totalAmount">₹0</span>
+                </div>
+            </div>
+            
+            <h3>Select Payment Method</h3>
+            <div class="payment-methods">
+                <div class="payment-method" onclick="selectPayment('card')">
+                    <h4>💳 Credit/Debit Card</h4>
+                    <p>Visa, MasterCard, RuPay</p>
+                </div>
+                <div class="payment-method" onclick="selectPayment('upi')">
+                    <h4>📱 UPI</h4>
+                    <p>PhonePe, GPay, Paytm</p>
+                </div>
+                <div class="payment-method" onclick="selectPayment('netbanking')">
+                    <h4>🏦 Net Banking</h4>
+                    <p>All major banks</p>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <button class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+                <button class="btn btn-success" onclick="processPayment()" id="payBtn" disabled>
+                    Pay Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Confirmation -->
+        <div class="booking-section" id="confirmation">
+            <div class="confirmation">
+                <h2>🎉 Booking Confirmed!</h2>
+                <div class="pnr-display" id="pnrDisplay">PNR123456</div>
+                <p>Your flight has been successfully booked.</p>
+                <div id="bookingDetails" style="margin: 20px 0; text-align: left; max-width: 400px; margin: 20px auto;">
+                    <!-- Booking details will be shown here -->
+                </div>
+                <button class="btn btn-primary" onclick="downloadTicket()">Download Ticket</button>
+                <button class="btn btn-secondary" onclick="window.location.href='/'">Book Another Flight</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let selectedSeat = null;
+        let selectedPayment = null;
+        let flightData = null;
+        let flightId = null;
+
+        // Get flight ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        flightId = urlParams.get('flight_id') || window.location.pathname.split('/').pop();
+
+        async function loadFlightDetails() {
+            try {
+                const response = await fetch(`/flights/${flightId}`);
+                flightData = await response.json();
+                
+                document.getElementById('flightDetails').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        <div><strong>Flight:</strong> ${flightData.flight_no}</div>
+                        <div><strong>Route:</strong> ${flightData.origin} → ${flightData.destination}</div>
+                        <div><strong>Departure:</strong> ${formatDateTime(flightData.departure_time)}</div>
+                        <div><strong>Arrival:</strong> ${formatDateTime(flightData.arrival_time)}</div>
+                        <div><strong>Price:</strong> ₹${flightData.dynamic_price}</div>
+                        <div><strong>Seats Available:</strong> ${flightData.seats_available}</div>
+                    </div>
+                `;
+                
+                document.getElementById('baseFareDisplay').textContent = `₹${flightData.base_fare}`;
+                document.getElementById('dynamicPriceDisplay').textContent = `₹${flightData.dynamic_price}`;
+                document.getElementById('totalAmount').textContent = `₹${flightData.dynamic_price}`;
+                
+            } catch (error) {
+                console.error('Error loading flight details:', error);
+            }
+        }
+
+        async function loadSeatMap() {
+            try {
+                const response = await fetch(`/seats/${flightId}`);
+                const seats = await response.json();
+                
+                const seatMap = document.getElementById('seatMap');
+                seatMap.innerHTML = '';
+                
+                seats.forEach(seat => {
+                    const seatElement = document.createElement('div');
+                    seatElement.className = `seat ${seat.available ? 'available' : 'occupied'} ${seat.type}`;
+                    seatElement.textContent = seat.seat_number;
+                    
+                    if (seat.available) {
+                        seatElement.onclick = () => selectSeat(seat.seat_number, seatElement);
+                    }
+                    
+                    seatMap.appendChild(seatElement);
+                });
+                
+            } catch (error) {
+                console.error('Error loading seat map:', error);
+            }
+        }
+
+        function selectSeat(seatNumber, element) {
+            // Remove previous selection
+            document.querySelectorAll('.seat.selected').forEach(seat => {
+                seat.classList.remove('selected');
+                if (seat.classList.contains('business')) {
+                    seat.classList.add('business');
+                } else {
+                    seat.classList.add('available');
+                }
+            });
+            
+            // Select new seat
+            element.classList.remove('available', 'business');
+            element.classList.add('selected');
+            selectedSeat = seatNumber;
+            
+            document.getElementById('seatNextBtn').disabled = false;
+        }
+
+        function selectPayment(method) {
+            document.querySelectorAll('.payment-method').forEach(pm => {
+                pm.classList.remove('selected');
+            });
+            
+            event.target.closest('.payment-method').classList.add('selected');
+            selectedPayment = method;
+            document.getElementById('payBtn').disabled = false;
+        }
+
+        function nextStep(step) {
+            if (step === 2 && !selectedSeat) {
+                alert('Please select a seat first');
+                return;
+            }
+            
+            if (step === 3) {
+                const form = document.getElementById('passengerForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+            }
+            
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.querySelectorAll('.booking-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            currentStep = step;
+            document.getElementById(`step${currentStep}`).classList.add('active');
+            document.querySelectorAll('.booking-section')[currentStep - 1].classList.add('active');
+        }
+
+        function prevStep(step) {
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.querySelectorAll('.booking-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            currentStep = step;
+            document.getElementById(`step${currentStep}`).classList.add('active');
+            document.querySelectorAll('.booking-section')[currentStep - 1].classList.add('active');
+        }
+
+        async function processPayment() {
+            if (!selectedPayment) {
+                alert('Please select a payment method');
+                return;
+            }
+            
+            const bookingData = {
+                flight_id: parseInt(flightId),
+                passenger_name: document.getElementById('passengerName').value,
+                passenger_age: parseInt(document.getElementById('passengerAge').value),
+                passenger_phone: document.getElementById('passengerPhone').value,
+                passenger_email: document.getElementById('passengerEmail').value,
+                seat_number: selectedSeat
+            };
+            
+            try {
+                document.getElementById('payBtn').textContent = 'Processing...';
+                document.getElementById('payBtn').disabled = true;
+                
+                const response = await fetch('/bookings/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('pnrDisplay').textContent = result.pnr;
+                    document.getElementById('bookingDetails').innerHTML = `
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                            <div><strong>PNR:</strong> ${result.pnr}</div>
+                            <div><strong>Flight:</strong> ${flightData.flight_no}</div>
+                            <div><strong>Passenger:</strong> ${bookingData.passenger_name}</div>
+                            <div><strong>Seat:</strong> ${selectedSeat}</div>
+                            <div><strong>Amount Paid:</strong> ₹${result.final_price}</div>
+                        </div>
+                    `;
+                    nextStep(4);
+                } else {
+                    alert('Booking failed: ' + result.detail);
+                    document.getElementById('payBtn').textContent = 'Pay Now';
+                    document.getElementById('payBtn').disabled = false;
+                }
+                
+            } catch (error) {
+                alert('Booking failed. Please try again.');
+                document.getElementById('payBtn').textContent = 'Pay Now';
+                document.getElementById('payBtn').disabled = false;
+            }
+        }
+
+        function downloadTicket() {
+            const pnr = document.getElementById('pnrDisplay').textContent;
+            window.open(`/bookings/${pnr}`, '_blank');
+        }
+
+        function formatDateTime(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleString('en-IN', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        // Initialize page
+        loadFlightDetails();
+        loadSeatMap();
+    </script>
+</body>
+</html>

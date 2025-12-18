@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Flight Booking System</title>
+    <title>Flight Search - Flight Booking System</title>
     <style>
         * {
             margin: 0;
@@ -13,6 +13,42 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+        }
+        .navbar {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .user-info {
+            color: #333;
+            font-weight: 500;
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .logout-btn:hover {
+            background: #c82333;
         }
         .container {
             max-width: 1200px;
@@ -47,17 +83,46 @@
             flex-wrap: wrap;
             margin-bottom: 20px;
         }
-        input, select {
+        .search-input {
             flex: 1;
             min-width: 200px;
+            position: relative;
+        }
+        .search-input input {
+            width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 5px;
             font-size: 16px;
         }
-        input:focus {
+        .search-input input:focus {
             outline: none;
             border-color: #667eea;
+        }
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .suggestion-item:hover {
+            background: #f8f9fa;
+        }
+        .suggestion-item:last-child {
+            border-bottom: none;
         }
         .btn-group {
             display: flex;
@@ -176,6 +241,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin-right: 10px;
         }
         .btn-details:hover {
             background: #5568d3;
@@ -224,17 +290,31 @@
     </style>
 </head>
 <body>
+    <div class="navbar">
+        <div class="navbar-brand">✈️ Flight Booking System</div>
+        <div class="navbar-user">
+            <div class="user-info">Hi, <span id="userName">User</span>!</div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
-            <h1>✈️ Flight Booking System</h1>
-            <p>Search and book flights with real-time dynamic pricing</p>
+            <h1>Search & Book Flights</h1>
+            <p>Find the best deals with real-time dynamic pricing</p>
         </div>
 
         <div class="search-box">
             <h2>Search Flights</h2>
             <div class="form-group">
-                <input type="text" id="origin" placeholder="From (e.g., DEL)" maxlength="3">
-                <input type="text" id="destination" placeholder="To (e.g., BOM)" maxlength="3">
+                <div class="search-input">
+                    <input type="text" id="origin" placeholder="From (City or Airport Code)" autocomplete="off">
+                    <div class="suggestions" id="originSuggestions"></div>
+                </div>
+                <div class="search-input">
+                    <input type="text" id="destination" placeholder="To (City or Airport Code)" autocomplete="off">
+                    <div class="suggestions" id="destinationSuggestions"></div>
+                </div>
                 <input type="date" id="date" min="2026-01-01">
             </div>
             <div class="btn-group">
@@ -255,30 +335,104 @@
     </div>
 
     <script>
+        let selectedOrigin = '';
+        let selectedDestination = '';
+
+        // Check if user is logged in
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        if (!user) {
+            window.location.href = '/login';
+        } else {
+            document.getElementById('userName').textContent = user.full_name || user.username;
+        }
+
+        // Set default date
         document.getElementById('date').min = '2026-01-01';
         document.getElementById('date').value = '2026-01-15';
 
-        function searchFlights() {
-            const origin = document.getElementById('origin').value.toUpperCase();
-            const destination = document.getElementById('destination').value.toUpperCase();
-            const date = document.getElementById('date').value;
-
-            if (!origin || !destination || !date) {
-                alert('Please fill all fields');
+        // City search functionality
+        async function searchCities(query, targetElement) {
+            if (query.length < 2) {
+                targetElement.style.display = 'none';
                 return;
             }
 
-            fetch(`/search?origin=${origin}&destination=${destination}&date=${date}`)
-                .then(res => res.json())
-                .then(data => displayFlights(data))
-                .catch(err => alert('Error: ' + err));
+            try {
+                const response = await fetch(`/cities/search?q=${encodeURIComponent(query)}`);
+                const cities = await response.json();
+
+                if (cities.length > 0) {
+                    targetElement.innerHTML = cities.map(city => 
+                        `<div class="suggestion-item" onclick="selectCity('${city.city}', '${city.code}', '${targetElement.id}')">${city.city} (${city.code})</div>`
+                    ).join('');
+                    targetElement.style.display = 'block';
+                } else {
+                    targetElement.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error searching cities:', error);
+            }
         }
 
-        function getAllFlights() {
-            fetch('/flights')
-                .then(res => res.json())
-                .then(data => displayFlights(data))
-                .catch(err => alert('Error: ' + err));
+        function selectCity(cityName, code, targetId) {
+            const isOrigin = targetId === 'originSuggestions';
+            const inputId = isOrigin ? 'origin' : 'destination';
+            
+            document.getElementById(inputId).value = `${cityName} (${code})`;
+            document.getElementById(targetId).style.display = 'none';
+            
+            if (isOrigin) {
+                selectedOrigin = code;
+            } else {
+                selectedDestination = code;
+            }
+        }
+
+        // Input event listeners
+        document.getElementById('origin').addEventListener('input', function(e) {
+            searchCities(e.target.value, document.getElementById('originSuggestions'));
+        });
+
+        document.getElementById('destination').addEventListener('input', function(e) {
+            searchCities(e.target.value, document.getElementById('destinationSuggestions'));
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-input')) {
+                document.querySelectorAll('.suggestions').forEach(s => s.style.display = 'none');
+            }
+        });
+
+        async function searchFlights() {
+            if (!selectedOrigin || !selectedDestination) {
+                alert('Please select both origin and destination cities');
+                return;
+            }
+
+            const date = document.getElementById('date').value;
+            if (!date) {
+                alert('Please select a date');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/search?origin=${selectedOrigin}&destination=${selectedDestination}&date=${date}`);
+                const flights = await response.json();
+                displayFlights(flights);
+            } catch (error) {
+                alert('Error searching flights: ' + error);
+            }
+        }
+
+        async function getAllFlights() {
+            try {
+                const response = await fetch('/flights');
+                const flights = await response.json();
+                displayFlights(flights);
+            } catch (error) {
+                alert('Error loading flights: ' + error);
+            }
         }
 
         function displayFlights(flights) {
@@ -315,8 +469,10 @@
                             <span class="base-price">₹${flight.base_fare}</span>
                             <span class="dynamic-price">₹${flight.dynamic_price}</span>
                         </div>
-                        <button class="btn-details" onclick="viewDetails(${flight.id})">View Details</button>
-                        <button class="btn-details" onclick="bookFlight(${flight.id})" style="background: #28a745; margin-left: 10px;">Book Now</button>
+                        <div>
+                            <button class="btn-details" onclick="viewDetails(${flight.id})">View Details</button>
+                            <button class="btn-details" onclick="bookFlight(${flight.id})" style="background: #28a745;">Book Now</button>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -376,12 +532,17 @@
                 });
         }
 
+        function bookFlight(flightId) {
+            window.location.href = `/book/${flightId}?flight_id=${flightId}`;
+        }
+
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
         }
 
-        function bookFlight(flightId) {
-            window.location.href = `/book/${flightId}?flight_id=${flightId}`;
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login';
         }
 
         window.onclick = function(event) {
