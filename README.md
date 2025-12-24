@@ -137,3 +137,16 @@ dynamic_price = base_fare × (1 + seat_factor + time_factor + demand_factor)
 ```
 
 Each factor is calculated based on current conditions and adds a percentage to the base fare.
+
+
+
+
+🔐 Sample Login Credentials
+Username: admin
+Password: admin123
+
+Username: demo
+Password: demo123
+
+Username: test
+Password: test123

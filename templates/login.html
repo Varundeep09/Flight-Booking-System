@@ -1,221 +1,303 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Login - Flight Booking System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyBook - Login</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
         }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+        
+        .auth-page {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
-        .auth-container {
-            background: white;
+        
+        .auth-card {
+            background: #fff;
             padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             width: 100%;
             max-width: 400px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
-        .auth-header {
+        
+        .logo {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
         }
-        .auth-header h1 {
-            color: #667eea;
-            margin-bottom: 10px;
+        
+        .logo i {
+            font-size: 48px;
+            color: #2563eb;
+            margin-bottom: 16px;
         }
+        
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        
+        .logo p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
         .form-group {
             margin-bottom: 20px;
         }
+        
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: bold;
-            color: #333;
+            font-weight: 600;
+            color: #374151;
+            font-size: 14px;
         }
+        
         .form-group input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
+            padding: 12px 16px;
             border-radius: 8px;
+            border: 2px solid #e5e7eb;
             font-size: 16px;
-            transition: border-color 0.3s;
+            transition: border-color 0.2s;
         }
+        
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
-        .btn {
+        
+        .btn-primary {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             border: none;
             border-radius: 8px;
+            background: #2563eb;
+            color: white;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 15px;
+            transition: background 0.2s;
+            margin-bottom: 20px;
         }
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
+        
         .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
+            background: #1d4ed8;
         }
-        .btn-secondary {
-            background: #f8f9fa;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
-        .btn-secondary:hover {
-            background: #667eea;
-            color: white;
-        }
-        .auth-switch {
+        
+        .toggle-link {
             text-align: center;
-            margin-top: 20px;
-            color: #666;
+            color: #6b7280;
+            font-size: 14px;
         }
-        .auth-switch a {
-            color: #667eea;
+        
+        .toggle-link a {
+            color: #2563eb;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
         }
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
+        
+        .toggle-link a:hover {
+            text-decoration: underline;
         }
-        .success {
-            background: #e8f5e8;
-            color: #2e7d32;
-            padding: 10px;
-            border-radius: 5px;
+        
+        .sample-creds {
+            margin-top: 24px;
+            padding: 16px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+        
+        .sample-creds h6 {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .sample-creds p {
+            font-size: 12px;
+            color: #6b7280;
+            margin: 4px 0;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
             margin-bottom: 20px;
-            text-align: center;
+            font-size: 14px;
+        }
+        
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .alert-danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 24px;
+            }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-header">
-            <h1>✈️ Flight Booking</h1>
-            <p id="authTitle">Welcome Back</p>
-        </div>
-
-        <div id="message"></div>
-
-        <!-- Login Form -->
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="loginUsername">Username</label>
-                <input type="text" id="loginUsername" required>
+    <div class="auth-page">
+        <div class="auth-card">
+            <div class="logo">
+                <i class="fas fa-plane"></i>
+                <h1>SkyBook</h1>
+                <p>Access your flight booking account</p>
             </div>
-            <div class="form-group">
-                <label for="loginPassword">Password</label>
-                <input type="password" id="loginPassword" required>
+            
+            <div id="alertContainer"></div>
+            
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Sign In</button>
+            </form>
+            
+            <!-- Signup Form -->
+            <form id="signupForm" style="display: none;">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signupFullName" placeholder="Enter full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="signupUsername" placeholder="Choose username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" placeholder="Enter email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="Create password" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Create Account</button>
+            </form>
+            
+            <div class="toggle-link">
+                <p id="toggleText">
+                    Don't have an account? 
+                    <a href="#" onclick="toggleForms()">Sign up here</a>
+                </p>
             </div>
-            <button type="submit" class="btn btn-primary">Login</button>
-        </form>
-
-        <!-- Signup Form -->
-        <form id="signupForm" style="display: none;">
-            <div class="form-group">
-                <label for="signupFullName">Full Name</label>
-                <input type="text" id="signupFullName" required>
+            
+            <div class="sample-creds">
+                <h6>Sample Credentials</h6>
+                <p>Username: <strong>admin</strong> | Password: <strong>admin123</strong></p>
+                <p>Username: <strong>demo</strong> | Password: <strong>demo123</strong></p>
             </div>
-            <div class="form-group">
-                <label for="signupUsername">Username</label>
-                <input type="text" id="signupUsername" required>
-            </div>
-            <div class="form-group">
-                <label for="signupEmail">Email</label>
-                <input type="email" id="signupEmail" required>
-            </div>
-            <div class="form-group">
-                <label for="signupPassword">Password</label>
-                <input type="password" id="signupPassword" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Sign Up</button>
-        </form>
-
-        <button class="btn btn-secondary" onclick="toggleForm()" id="toggleBtn">
-            Create New Account
-        </button>
-
-        <div class="auth-switch">
-            <p>Secure login with encrypted passwords</p>
         </div>
     </div>
-
+    
     <script>
-        let isLoginMode = true;
-
-        function toggleForm() {
+        let isLoginForm = true;
+        
+        function toggleForms() {
             const loginForm = document.getElementById('loginForm');
             const signupForm = document.getElementById('signupForm');
-            const authTitle = document.getElementById('authTitle');
-            const toggleBtn = document.getElementById('toggleBtn');
-            const message = document.getElementById('message');
-
-            message.innerHTML = '';
-
-            if (isLoginMode) {
+            const toggleText = document.getElementById('toggleText');
+            
+            if (isLoginForm) {
                 loginForm.style.display = 'none';
                 signupForm.style.display = 'block';
-                authTitle.textContent = 'Create Account';
-                toggleBtn.textContent = 'Already have an account? Login';
-                isLoginMode = false;
+                toggleText.innerHTML = 'Already have an account? <a href="#" onclick="toggleForms()">Sign in here</a>';
+                isLoginForm = false;
             } else {
                 loginForm.style.display = 'block';
                 signupForm.style.display = 'none';
-                authTitle.textContent = 'Welcome Back';
-                toggleBtn.textContent = 'Create New Account';
-                isLoginMode = true;
+                toggleText.innerHTML = 'Don\'t have an account? <a href="#" onclick="toggleForms()">Sign up here</a>';
+                isLoginForm = true;
             }
+            clearAlerts();
         }
-
+        
+        function showAlert(message, type = 'danger') {
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+        
+        function clearAlerts() {
+            document.getElementById('alertContainer').innerHTML = '';
+        }
+        
+        // Login Form Handler
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
-
+            
+            if (!username || !password) {
+                showAlert('Please fill in all fields');
+                return;
+            }
+            
             try {
                 const response = await fetch('/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    localStorage.setItem('user', JSON.stringify(result.user));
-                    window.location.href = '/dashboard';
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    showAlert('Login successful! Redirecting...', 'success');
+                    setTimeout(() => window.location.href = '/dashboard', 1500);
                 } else {
-                    showMessage(result.detail, 'error');
+                    showAlert(data.detail || 'Login failed. Please check your credentials.');
                 }
             } catch (error) {
-                showMessage('Login failed. Please try again.', 'error');
+                showAlert('Network error. Please try again.');
             }
         });
-
+        
+        // Signup Form Handler
         document.getElementById('signupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -223,34 +305,40 @@
             const username = document.getElementById('signupUsername').value;
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
-
+            
+            if (!fullName || !username || !email || !password) {
+                showAlert('Please fill in all fields');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showAlert('Password must be at least 6 characters long');
+                return;
+            }
+            
             try {
                 const response = await fetch('/auth/signup', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ full_name: fullName, username, email, password })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password, full_name: fullName })
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('Account created successfully! Please login.', 'success');
-                    toggleForm();
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showAlert('Account created successfully! Please sign in.', 'success');
+                    setTimeout(() => {
+                        toggleForms();
+                        document.getElementById('loginUsername').value = username;
+                    }, 2000);
                 } else {
-                    showMessage(result.detail, 'error');
+                    showAlert(data.detail || 'Signup failed. Please try again.');
                 }
             } catch (error) {
-                showMessage('Signup failed. Please try again.', 'error');
+                showAlert('Network error. Please try again.');
             }
         });
-
-        function showMessage(text, type) {
-            const message = document.getElementById('message');
-            message.innerHTML = `<div class="${type}">${text}</div>`;
-        }
-
+        
         // Check if user is already logged in
         if (localStorage.getItem('user')) {
             window.location.href = '/dashboard';
